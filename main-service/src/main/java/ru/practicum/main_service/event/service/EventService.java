@@ -28,8 +28,7 @@ public interface EventService {
 
     EventFullDto patchEventByPrivate(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest);
 
-    List<EventShortDto> getEventsByPublic(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
-                                          LocalDateTime rangeEnd, Boolean onlyAvailable, EventSort sort,
+    List<EventShortDto> getEventsByPublic(SearchEventParams searchEventParams, EventSort sort,
                                           Integer from, Integer size, HttpServletRequest request);
 
     EventFullDto getEventByPublic(Long id, HttpServletRequest request);

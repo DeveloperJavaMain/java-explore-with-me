@@ -237,16 +237,16 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> getEventsByPublic(
-            String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart, LocalDateTime rangeEnd,
-            Boolean onlyAvailable, EventSort sort, Integer from, Integer size, HttpServletRequest request) {
+    public List<EventShortDto> getEventsByPublic(SearchEventParams searchEventParams,
+                                                 EventSort sort, Integer from, Integer size,
+                                                 HttpServletRequest request) {
         log.info("Вывод событий на публичный запрос с параметрами text = {}, categoriesId = {}, paid = {}, rangeStart = {}, " +
                 "rangeEnd = {}, onlyAvailable = {}, sort = {}, from = {}, size = {}",
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+                searchEventParams.getText(), searchEventParams.getCategories(), searchEventParams.getPaid(), searchEventParams.getRangeStart(), searchEventParams.getRangeEnd(), searchEventParams.getOnlyAvailable(), sort, from, size);
 
-        checkStartIsBeforeEnd(rangeStart, rangeEnd);
+        checkStartIsBeforeEnd(searchEventParams.getRangeStart(), searchEventParams.getRangeEnd());
 
-        List<Event> events = eventRepository.getEventsByPublic(text, categories, paid, rangeStart, rangeEnd, from, size);
+        List<Event> events = eventRepository.getEventsByPublic(searchEventParams.getText(), searchEventParams.getCategories(), searchEventParams.getPaid(), searchEventParams.getRangeStart(), searchEventParams.getRangeEnd(), from, size);
 
         if (events.isEmpty()) {
             return List.of();
@@ -257,7 +257,7 @@ public class EventServiceImpl implements EventService {
 
         List<EventShortDto> eventsShortDto = toEventsShortDto(events);
 
-        if (onlyAvailable) {
+        if (searchEventParams.getOnlyAvailable()) {
             eventsShortDto = eventsShortDto.stream()
                     .filter(eventShort -> (eventsParticipantLimit.get(eventShort.getId()) == 0 ||
                             eventsParticipantLimit.get(eventShort.getId()) > eventShort.getConfirmedRequests()))

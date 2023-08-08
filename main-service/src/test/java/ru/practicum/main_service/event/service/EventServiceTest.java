@@ -752,9 +752,8 @@ public class EventServiceTest {
             when(statsService.getConfirmedRequests(any())).thenReturn(confirmedRequests);
             when(eventMapper.toEventShortDto(any(), any(), any())).thenReturn(eventShortDto1);
 
-            List<EventShortDto> eventShortsDto = eventService.getEventsByPublic(text, List.of(event1.getCategory().getId()),
-                    false, event1.getCreatedOn(), event1.getCreatedOn().plusDays(5), true,
-                    EventSort.EVENT_DATE, 0, 10, new MockHttpServletRequest());
+            List<EventShortDto> eventShortsDto = eventService.getEventsByPublic(
+                    new SearchEventParams(text, List.of(event1.getCategory().getId()), false, event1.getCreatedOn(), event1.getCreatedOn().plusDays(5), true), EventSort.EVENT_DATE, 0, 10, new MockHttpServletRequest());
 
             assertEquals(1, eventShortsDto.size());
 
@@ -770,9 +769,8 @@ public class EventServiceTest {
         @Test
         public void shouldThrowExceptionIfBadTimeRange() {
             BadRequestException exception = assertThrows(BadRequestException.class,
-                    () -> eventService.getEventsByPublic("some text", List.of(event1.getCategory().getId()),
-                            false, event1.getCreatedOn(), event1.getCreatedOn().minusMinutes(5), true,
-                            EventSort.EVENT_DATE, 0, 10, new MockHttpServletRequest()));
+                    () -> eventService.getEventsByPublic(
+                            new SearchEventParams("some text", List.of(event1.getCategory().getId()), false, event1.getCreatedOn(), event1.getCreatedOn().minusMinutes(5), true), EventSort.EVENT_DATE, 0, 10, new MockHttpServletRequest()));
             assertEquals(String.format("Field: eventDate. Error: некорректные параметры временного " +
                             "интервала. Value: rangeStart = %s, rangeEnd = %s", event1.getCreatedOn(),
                     event1.getCreatedOn().minusMinutes(5)), exception.getMessage());

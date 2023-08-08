@@ -15,6 +15,7 @@ import ru.practicum.main_service.event.dto.EventFullDto;
 import ru.practicum.main_service.event.dto.EventShortDto;
 import ru.practicum.main_service.event.enums.EventSort;
 import ru.practicum.main_service.event.service.EventService;
+import ru.practicum.main_service.event.service.SearchEventParams;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
@@ -42,8 +43,8 @@ public class EventPublicController {
             @RequestParam(defaultValue = MainCommon.PAGE_DEFAULT_FROM) @PositiveOrZero Integer from,
             @RequestParam(defaultValue = MainCommon.PAGE_DEFAULT_SIZE) @Positive Integer size,
             HttpServletRequest request) {
-        return eventService.getEventsByPublic(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
-                sort, from, size, request);
+        return eventService.getEventsByPublic(
+                new SearchEventParams(text, categories, paid, rangeStart, rangeEnd, onlyAvailable), sort, from, size, request);
     }
 
     @GetMapping("/{id}")

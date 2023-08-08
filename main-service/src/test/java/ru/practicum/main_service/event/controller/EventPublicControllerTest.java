@@ -48,7 +48,7 @@ public class EventPublicControllerTest {
     class GetEventsByPublic {
         @Test
         public void shouldGet() throws Exception {
-            when(eventService.getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            when(eventService.getEventsByPublic(any(), any(), any(), any(), any()))
                     .thenReturn(List.of(eventShortDto1, eventShortDto2));
 
             mvc.perform(get("/events?text=0&" +
@@ -67,12 +67,12 @@ public class EventPublicControllerTest {
                     .andExpect(content().json(mapper.writeValueAsString(List.of(eventShortDto1, eventShortDto2))));
 
             verify(eventService, times(1))
-                    .getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                    .getEventsByPublic(any(), any(), any(), any(), any());
         }
 
         @Test
         public void shouldGetWithEmptyParameters() throws Exception {
-            when(eventService.getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            when(eventService.getEventsByPublic(any(), any(), any(), any(), any()))
                     .thenReturn(List.of(eventShortDto1, eventShortDto2));
 
             mvc.perform(get("/events")
@@ -83,7 +83,7 @@ public class EventPublicControllerTest {
                     .andExpect(content().json(mapper.writeValueAsString(List.of(eventShortDto1, eventShortDto2))));
 
             verify(eventService, times(1))
-                    .getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                    .getEventsByPublic(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -95,7 +95,7 @@ public class EventPublicControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never())
-                    .getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                    .getEventsByPublic(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -107,7 +107,7 @@ public class EventPublicControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never())
-                    .getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                    .getEventsByPublic(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -119,7 +119,7 @@ public class EventPublicControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never())
-                    .getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                    .getEventsByPublic(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -131,7 +131,7 @@ public class EventPublicControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never())
-                    .getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                    .getEventsByPublic(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -143,7 +143,7 @@ public class EventPublicControllerTest {
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never())
-                    .getEventsByPublic(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                    .getEventsByPublic(any(), any(), any(), any(), any());
         }
     }
 

@@ -22,8 +22,9 @@ import ru.practicum.main_service.compilation.model.Compilation;
 import ru.practicum.main_service.compilation.repository.CompilationRepository;
 import ru.practicum.main_service.compilation.service.CompilationServiceImpl;
 import ru.practicum.main_service.event.dto.EventShortDto;
+import ru.practicum.main_service.event.mapper.EventTool;
 import ru.practicum.main_service.event.model.Event;
-import ru.practicum.main_service.event.service.EventService;
+import ru.practicum.main_service.event.repository.EventRepository;
 import ru.practicum.main_service.exception.NotFoundException;
 import ru.practicum.main_service.user.model.User;
 
@@ -42,7 +43,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class CompilationServiceTest {
     @Mock
-    private EventService eventService;
+    private EventRepository eventRepository;
+
+    @Mock
+    private EventTool eventTool;
 
     @Mock
     private CompilationRepository compilationRepository;
@@ -149,22 +153,20 @@ public class CompilationServiceTest {
     class Create {
         @Test
         public void shouldCreate() {
-            when(eventService.getEventsByIds(any())).thenReturn(List.of(event1, event2));
+            when(eventRepository.findAllByIdIn(any())).thenReturn(List.of(event1, event2));
             when(compilationMapper.newDtoToCompilation(any(), any())).thenCallRealMethod();
             when(compilationRepository.save(any())).thenReturn(compilation1);
             when(compilationRepository.findById(any())).thenReturn(Optional.of(compilation1));
-            when(eventService.toEventsShortDto(List.of(event1, event2))).thenReturn(List.of(eventShortDto1, eventShortDto2));
+            when(eventTool.toEventsShortDto(List.of(event1, event2))).thenReturn(List.of(eventShortDto1, eventShortDto2));
             when(compilationMapper.toCompilationDto(any(), any())).thenCallRealMethod();
 
             CompilationDto savedCompilationDto = compilationService.create(newCompilationDto1);
 
             checkResults(compilationDto1, savedCompilationDto);
 
-            verify(eventService, times(1)).getEventsByIds(any());
             verify(compilationMapper, times(1)).newDtoToCompilation(any(), any());
             verify(compilationRepository, times(1)).save(compilationArgumentCaptor.capture());
             verify(compilationRepository, times(1)).findById(any());
-            verify(eventService, times(1)).toEventsShortDto(any());
             verify(compilationMapper, times(1)).toCompilationDto(any(), any());
 
             Compilation savedCompilation = compilationArgumentCaptor.getValue();
@@ -178,7 +180,7 @@ public class CompilationServiceTest {
             when(compilationMapper.newDtoToCompilation(any(), any())).thenCallRealMethod();
             when(compilationRepository.save(any())).thenReturn(compilation2);
             when(compilationRepository.findById(any())).thenReturn(Optional.of(compilation2));
-            when(eventService.toEventsShortDto(List.of())).thenReturn(List.of());
+            when(eventTool.toEventsShortDto(List.of())).thenReturn(List.of());
             when(compilationMapper.toCompilationDto(any(), any())).thenCallRealMethod();
 
             CompilationDto savedCompilationDto = compilationService.create(newCompilationDto2);
@@ -188,7 +190,6 @@ public class CompilationServiceTest {
             verify(compilationMapper, times(1)).newDtoToCompilation(any(), any());
             verify(compilationRepository, times(1)).save(compilationArgumentCaptor.capture());
             verify(compilationRepository, times(1)).findById(any());
-            verify(eventService, times(1)).toEventsShortDto(any());
             verify(compilationMapper, times(1)).toCompilationDto(any(), any());
 
             Compilation savedCompilation = compilationArgumentCaptor.getValue();
@@ -199,13 +200,12 @@ public class CompilationServiceTest {
 
         @Test
         public void shouldThrowExceptionIfEventNotFound() {
-            when(eventService.getEventsByIds(any())).thenReturn(List.of(event1));
+            when(eventRepository.findAllByIdIn(any())).thenReturn(List.of(event1));
 
             NotFoundException exception = assertThrows(NotFoundException.class,
                     () -> compilationService.create(newCompilationDto1));
             assertEquals("Некоторые события не найдены.", exception.getMessage());
 
-            verify(eventService, times(1)).getEventsByIds(any());
             verify(compilationRepository, never()).save(any());
         }
     }
@@ -215,9 +215,9 @@ public class CompilationServiceTest {
         @Test
         public void shouldPatch() {
             when(compilationRepository.findById(any())).thenReturn(Optional.of(compilation1));
-            when(eventService.getEventsByIds(any())).thenReturn(List.of(event1));
+            when(eventRepository.findAllByIdIn(any())).thenReturn(List.of(event1));
             when(compilationRepository.save(any())).thenReturn(updatedCompilation1);
-            when(eventService.toEventsShortDto(List.of(event1))).thenReturn(List.of(eventShortDto1));
+            when(eventTool.toEventsShortDto(List.of(event1))).thenReturn(List.of(eventShortDto1));
             when(compilationMapper.toCompilationDto(any(), any())).thenCallRealMethod();
 
             CompilationDto savedCompilationDto = compilationService.patch(compilation1.getId(), updateCompilationRequest1);
@@ -225,9 +225,7 @@ public class CompilationServiceTest {
             checkResults(updatedCompilationDto1, savedCompilationDto);
 
             verify(compilationRepository, times(2)).findById(any());
-            verify(eventService, times(1)).getEventsByIds(any());
             verify(compilationRepository, times(1)).save(compilationArgumentCaptor.capture());
-            verify(eventService, times(1)).toEventsShortDto(any());
             verify(compilationMapper, times(1)).toCompilationDto(any(), any());
 
             Compilation savedCompilation = compilationArgumentCaptor.getValue();
@@ -251,7 +249,7 @@ public class CompilationServiceTest {
         @Test
         public void shouldThrowExceptionIfSomeEventsIdNotFound() {
             when(compilationRepository.findById(any())).thenReturn(Optional.of(compilation1));
-            when(eventService.getEventsByIds(any())).thenReturn(List.of());
+            when(eventRepository.findAllByIdIn(any())).thenReturn(List.of());
 
             NotFoundException exception = assertThrows(NotFoundException.class,
                     () -> compilationService.patch(compilation1.getId(), updateCompilationRequest1));
@@ -292,7 +290,7 @@ public class CompilationServiceTest {
         @Test
         public void shouldGetIfPinnedIsNull() {
             when(compilationRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(compilation1, compilation2)));
-            when(eventService.toEventsShortDto(any())).thenReturn(List.of(eventShortDto1, eventShortDto2));
+            when(eventTool.toEventsShortDto(any())).thenReturn(List.of(eventShortDto1, eventShortDto2));
             when(compilationMapper.toCompilationDto(ArgumentMatchers.eq(compilation1), ArgumentMatchers.any()))
                     .thenCallRealMethod();
             when(compilationMapper.toCompilationDto(ArgumentMatchers.eq(compilation2), ArgumentMatchers.any()))
@@ -301,7 +299,6 @@ public class CompilationServiceTest {
             List<CompilationDto> savedCompilationsDto = compilationService.getAll(null, pageable);
 
             verify(compilationRepository, times(1)).findAll(pageable);
-            verify(eventService, times(1)).toEventsShortDto(any());
             verify(compilationMapper, times(2)).toCompilationDto(any(), any());
 
             assertEquals(2, savedCompilationsDto.size());
@@ -316,14 +313,13 @@ public class CompilationServiceTest {
         @Test
         public void shouldGetIfPinnedIsNotNull() {
             when(compilationRepository.findAllByPinned(compilation2.getPinned(), pageable)).thenReturn(List.of(compilation2));
-            when(eventService.toEventsShortDto(any())).thenReturn(List.of());
+            when(eventTool.toEventsShortDto(any())).thenReturn(List.of());
             when(compilationMapper.toCompilationDto(ArgumentMatchers.eq(compilation2), ArgumentMatchers.any()))
                     .thenCallRealMethod();
 
             List<CompilationDto> savedCompilationsDto = compilationService.getAll(compilation2.getPinned(), pageable);
 
             verify(compilationRepository, times(1)).findAllByPinned(any(), any());
-            verify(eventService, times(1)).toEventsShortDto(any());
             verify(compilationMapper, times(1)).toCompilationDto(any(), any());
 
             assertEquals(1, savedCompilationsDto.size());
@@ -339,7 +335,7 @@ public class CompilationServiceTest {
         @Test
         public void shouldGet() {
             when(compilationRepository.findById(compilation1.getId())).thenReturn(Optional.of(compilation1));
-            when(eventService.toEventsShortDto(compilation1.getEvents())).thenReturn(List.of(eventShortDto1, eventShortDto2));
+            when(eventTool.toEventsShortDto(compilation1.getEvents())).thenReturn(List.of(eventShortDto1, eventShortDto2));
             when(compilationMapper.toCompilationDto(ArgumentMatchers.eq(compilation1), ArgumentMatchers.any()))
                     .thenCallRealMethod();
 
@@ -348,7 +344,6 @@ public class CompilationServiceTest {
             checkResults(compilationDto1, savedCompilationsDto);
 
             verify(compilationRepository, times(1)).findById(compilation1.getId());
-            verify(eventService, times(1)).toEventsShortDto(any());
             verify(compilationMapper, times(1)).toCompilationDto(any(), any());
         }
 

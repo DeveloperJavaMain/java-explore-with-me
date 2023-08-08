@@ -1,6 +1,6 @@
 package ru.practicum.main_service.compilation.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,8 +12,9 @@ import ru.practicum.main_service.compilation.mapper.CompilationMapper;
 import ru.practicum.main_service.compilation.model.Compilation;
 import ru.practicum.main_service.compilation.repository.CompilationRepository;
 import ru.practicum.main_service.event.dto.EventShortDto;
+import ru.practicum.main_service.event.mapper.EventTool;
 import ru.practicum.main_service.event.model.Event;
-import ru.practicum.main_service.event.service.EventService;
+import ru.practicum.main_service.event.repository.EventRepository;
 import ru.practicum.main_service.exception.NotFoundException;
 
 import java.util.ArrayList;
@@ -24,13 +25,14 @@ import java.util.Map;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 @Transactional(readOnly = true)
 @Slf4j
 public class CompilationServiceImpl implements CompilationService {
-    private final EventService eventService;
+    private final EventRepository eventRepository;
     private final CompilationRepository compilationRepository;
     private final CompilationMapper compilationMapper;
+    private final EventTool eventTool;
 
     @Override
     @Transactional
@@ -40,7 +42,7 @@ public class CompilationServiceImpl implements CompilationService {
         List<Event> events = new ArrayList<>();
 
         if (!newCompilationDto.getEvents().isEmpty()) {
-            events = eventService.getEventsByIds(newCompilationDto.getEvents());
+            events = eventRepository.findAllByIdIn(newCompilationDto.getEvents());
             checkSize(events, newCompilationDto.getEvents());
         }
 
@@ -65,7 +67,7 @@ public class CompilationServiceImpl implements CompilationService {
         }
 
         if (updateCompilationRequest.getEvents() != null) {
-            List<Event> events = eventService.getEventsByIds(updateCompilationRequest.getEvents());
+            List<Event> events = eventRepository.findAllByIdIn(updateCompilationRequest.getEvents());
 
             checkSize(events, updateCompilationRequest.getEvents());
 
@@ -103,7 +105,7 @@ public class CompilationServiceImpl implements CompilationService {
         compilations.forEach(compilation -> uniqueEvents.addAll(compilation.getEvents()));
 
         Map<Long, EventShortDto> eventsShortDto = new HashMap<>();
-        eventService.toEventsShortDto(new ArrayList<>(uniqueEvents))
+        eventTool.toEventsShortDto(new ArrayList<>(uniqueEvents))
                 .forEach(event -> eventsShortDto.put(event.getId(), event));
 
         List<CompilationDto> result = new ArrayList<>();
@@ -123,7 +125,7 @@ public class CompilationServiceImpl implements CompilationService {
 
         Compilation compilation = getCompilationById(compId);
 
-        List<EventShortDto> eventsShortDto = eventService.toEventsShortDto(compilation.getEvents());
+        List<EventShortDto> eventsShortDto = eventTool.toEventsShortDto(compilation.getEvents());
 
         return compilationMapper.toCompilationDto(compilation, eventsShortDto);
     }
@@ -138,4 +140,5 @@ public class CompilationServiceImpl implements CompilationService {
             throw new NotFoundException("Некоторые события не найдены.");
         }
     }
+
 }
