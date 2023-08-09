@@ -1,4 +1,4 @@
-package ru.practicum.stats_common.model;
+package ru.practicum.main_service.category.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,21 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class EndpointHit {
-    @NotBlank
-    private String app;
+@Builder
+public class CategoryDto {
+    private Long id;
 
     @NotBlank
-    private String uri;
+    @Size(max = 50)
+    private String name;
 
-    @NotBlank
-    private String ip;
-
-    @NotBlank
-    private String timestamp;
 }
