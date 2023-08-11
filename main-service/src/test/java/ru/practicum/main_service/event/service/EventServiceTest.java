@@ -15,7 +15,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import ru.practicum.main_service.MainCommon;
 import ru.practicum.main_service.category.dto.CategoryDto;
 import ru.practicum.main_service.category.model.Category;
-import ru.practicum.main_service.category.service.CategoryService;
+import ru.practicum.main_service.category.repository.CategoryRepository;
 import ru.practicum.main_service.event.dto.EventFullDto;
 import ru.practicum.main_service.event.dto.EventShortDto;
 import ru.practicum.main_service.event.dto.LocationDto;
@@ -36,7 +36,7 @@ import ru.practicum.main_service.exception.ForbiddenException;
 import ru.practicum.main_service.exception.NotFoundException;
 import ru.practicum.main_service.user.dto.UserShortDto;
 import ru.practicum.main_service.user.model.User;
-import ru.practicum.main_service.user.service.UserService;
+import ru.practicum.main_service.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -56,10 +56,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class EventServiceTest {
     @Mock
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Mock
-    private CategoryService categoryService;
+    private CategoryRepository categoryRepository;
 
     @Mock
     private StatsService statsService;
@@ -287,7 +287,7 @@ public class EventServiceTest {
             confirmedRequests.put(event1.getId(), eventFullDto1.getConfirmedRequests());
 
             when(eventRepository.findById(event1.getId())).thenReturn(Optional.of(event1));
-            when(categoryService.getCategoryById(updatedCategory.getId())).thenReturn(updatedCategory);
+            when(categoryRepository.findById(updatedCategory.getId())).thenReturn(Optional.of(updatedCategory));
             when(locationMapper.toLocation(any())).thenCallRealMethod();
             when(locationRepository.findByLatAndLon(updatedLocationDto.getLat(), updatedLocationDto.getLon()))
                     .thenReturn(Optional.empty());
@@ -302,7 +302,6 @@ public class EventServiceTest {
             assertEquals(eventFullDto1, eventFullDto);
 
             verify(eventRepository, times(1)).findById(any());
-            verify(categoryService, times(1)).getCategoryById(any());
             verify(locationMapper, times(1)).toLocation(any());
             verify(locationRepository, times(1)).findByLatAndLon(any(), any());
             verify(locationRepository, times(1)).save(any());
@@ -323,7 +322,7 @@ public class EventServiceTest {
             updatedEvent1.setState(EventState.REJECTED);
 
             when(eventRepository.findById(event1.getId())).thenReturn(Optional.of(event1));
-            when(categoryService.getCategoryById(updatedCategory.getId())).thenReturn(updatedCategory);
+            when(categoryRepository.findById(updatedCategory.getId())).thenReturn(Optional.of(updatedCategory));
             when(locationMapper.toLocation(any())).thenCallRealMethod();
             when(locationRepository.findByLatAndLon(updatedLocationDto.getLat(), updatedLocationDto.getLon()))
                     .thenReturn(Optional.empty());
@@ -338,7 +337,6 @@ public class EventServiceTest {
             assertEquals(eventFullDto1, eventFullDto);
 
             verify(eventRepository, times(1)).findById(any());
-            verify(categoryService, times(1)).getCategoryById(any());
             verify(locationMapper, times(1)).toLocation(any());
             verify(locationRepository, times(1)).findByLatAndLon(any(), any());
             verify(locationRepository, times(1)).save(any());
@@ -359,7 +357,7 @@ public class EventServiceTest {
             updatedEvent1.setParticipantLimit(0);
 
             when(eventRepository.findById(event1.getId())).thenReturn(Optional.of(event1));
-            when(categoryService.getCategoryById(updatedCategory.getId())).thenReturn(updatedCategory);
+            when(categoryRepository.findById(updatedCategory.getId())).thenReturn(Optional.of(updatedCategory));
             when(locationMapper.toLocation(any())).thenCallRealMethod();
             when(locationRepository.findByLatAndLon(updatedLocationDto.getLat(), updatedLocationDto.getLon()))
                     .thenReturn(Optional.empty());
@@ -374,7 +372,6 @@ public class EventServiceTest {
             assertEquals(eventFullDto1, eventFullDto);
 
             verify(eventRepository, times(1)).findById(any());
-            verify(categoryService, times(1)).getCategoryById(any());
             verify(locationMapper, times(1)).toLocation(any());
             verify(locationRepository, times(1)).findByLatAndLon(any(), any());
             verify(locationRepository, times(1)).save(any());
@@ -418,7 +415,7 @@ public class EventServiceTest {
             confirmedRequests.put(event1.getId(), 51L);
 
             when(eventRepository.findById(event1.getId())).thenReturn(Optional.of(event1));
-            when(categoryService.getCategoryById(updatedCategory.getId())).thenReturn(updatedCategory);
+            when(categoryRepository.findById(updatedCategory.getId())).thenReturn(Optional.of(updatedCategory));
             when(locationMapper.toLocation(any())).thenCallRealMethod();
             when(locationRepository.findByLatAndLon(updatedLocationDto.getLat(), updatedLocationDto.getLon()))
                     .thenReturn(Optional.empty());
@@ -432,7 +429,6 @@ public class EventServiceTest {
                     exception.getMessage());
 
             verify(eventRepository, times(1)).findById(any());
-            verify(categoryService, times(1)).getCategoryById(any());
             verify(locationMapper, times(1)).toLocation(any());
             verify(locationRepository, times(1)).findByLatAndLon(any(), any());
             verify(locationRepository, times(1)).save(any());
@@ -443,7 +439,7 @@ public class EventServiceTest {
         @Test
         public void shouldThrowExceptionIfEventStateNotPending() {
             when(eventRepository.findById(event2.getId())).thenReturn(Optional.of(event2));
-            when(categoryService.getCategoryById(updatedCategory.getId())).thenReturn(updatedCategory);
+            when(categoryRepository.findById(updatedCategory.getId())).thenReturn(Optional.of(updatedCategory));
             when(locationMapper.toLocation(any())).thenCallRealMethod();
             when(locationRepository.findByLatAndLon(updatedLocationDto.getLat(), updatedLocationDto.getLon()))
                     .thenReturn(Optional.empty());
@@ -457,7 +453,6 @@ public class EventServiceTest {
                     exception.getMessage());
 
             verify(eventRepository, times(1)).findById(any());
-            verify(categoryService, times(1)).getCategoryById(any());
             verify(locationMapper, times(1)).toLocation(any());
             verify(locationRepository, times(1)).findByLatAndLon(any(), any());
             verify(locationRepository, times(1)).save(any());
@@ -470,7 +465,7 @@ public class EventServiceTest {
     class GetAllEventsByPrivate {
         @Test
         public void shouldGet() {
-            when(userService.getUserById(event1.getInitiator().getId())).thenReturn(event1.getInitiator());
+            when(userRepository.findById(event1.getInitiator().getId())).thenReturn(Optional.of(event1.getInitiator()));
             when(eventRepository.findAllByInitiatorId(event1.getInitiator().getId(), pageable)).thenReturn(List.of(event1));
             when(statsService.getConfirmedRequests(any())).thenReturn(confirmedRequests);
             when(statsService.getViews(any())).thenReturn(views);
@@ -481,7 +476,6 @@ public class EventServiceTest {
             assertEquals(1, eventsShortDto.size());
             assertEquals(eventShortDto1, eventsShortDto.get(0));
 
-            verify(userService, times(1)).getUserById(any());
             verify(eventRepository, times(1)).findAllByInitiatorId(any(), any());
             verify(statsService, times(1)).getConfirmedRequests(any());
             verify(statsService, times(1)).getViews(any());
@@ -508,8 +502,8 @@ public class EventServiceTest {
 
         @Test
         public void shouldCreate() {
-            when(userService.getUserById(event1.getInitiator().getId())).thenReturn(event1.getInitiator());
-            when(categoryService.getCategoryById(newEventDto.getCategory())).thenReturn(category);
+            when(userRepository.findById(event1.getInitiator().getId())).thenReturn(Optional.of(event1.getInitiator()));
+            when(categoryRepository.findById(newEventDto.getCategory())).thenReturn(Optional.of(category));
             when(locationMapper.toLocation(any())).thenCallRealMethod();
             when(locationRepository.findByLatAndLon(locationDto.getLat(), locationDto.getLon()))
                     .thenReturn(Optional.empty());
@@ -522,8 +516,6 @@ public class EventServiceTest {
 
             assertEquals(eventFullDto1, eventFullDtoFromRepository);
 
-            verify(userService, times(1)).getUserById(any());
-            verify(categoryService, times(1)).getCategoryById(any());
             verify(locationMapper, times(1)).toLocation(any());
             verify(locationRepository, times(1)).findByLatAndLon(any(), any());
             verify(locationRepository, times(1)).save(any());
@@ -553,7 +545,7 @@ public class EventServiceTest {
     class GetEventByPrivate {
         @Test
         public void shouldGet() {
-            when(userService.getUserById(event1.getInitiator().getId())).thenReturn(event1.getInitiator());
+            when(userRepository.findById(event1.getInitiator().getId())).thenReturn(Optional.of(event1.getInitiator()));
             when(eventRepository.findByIdAndInitiatorId(event1.getId(), event1.getInitiator().getId()))
                     .thenReturn(Optional.of(event1));
             when(eventRepository.save(any())).thenReturn(event1);
@@ -566,7 +558,6 @@ public class EventServiceTest {
 
             assertEquals(eventFullDto1, eventFullDtoFromRepository);
 
-            verify(userService, times(1)).getUserById(any());
             verify(eventRepository, times(1)).findByIdAndInitiatorId(any(), any());
             verify(statsService, times(1)).getConfirmedRequests(any());
             verify(statsService, times(1)).getViews(any());
@@ -575,7 +566,7 @@ public class EventServiceTest {
 
         @Test
         public void shouldThrowExceptionIfEventNotFound() {
-            when(userService.getUserById(event1.getInitiator().getId())).thenReturn(event1.getInitiator());
+            when(userRepository.findById(event1.getInitiator().getId())).thenReturn(Optional.of(event1.getInitiator()));
             when(eventRepository.findByIdAndInitiatorId(event1.getId(), event1.getInitiator().getId()))
                     .thenReturn(Optional.empty());
 
@@ -583,7 +574,7 @@ public class EventServiceTest {
                     () -> eventService.getEventByPrivate(event1.getInitiator().getId(), event1.getId()));
             assertEquals("События с таким id не существует.", exception.getMessage());
 
-            verify(userService, times(1)).getUserById(any());
+            verify(userRepository, times(1)).findById(any());
             verify(eventRepository, times(1)).findByIdAndInitiatorId(any(), any());
         }
     }
@@ -624,10 +615,10 @@ public class EventServiceTest {
 
         @Test
         public void shouldSendToReview() {
-            when(userService.getUserById(event1.getInitiator().getId())).thenReturn(event1.getInitiator());
+            when(userRepository.findById(event1.getInitiator().getId())).thenReturn(Optional.of(event1.getInitiator()));
             when(eventRepository.findByIdAndInitiatorId(event1.getId(), event1.getInitiator().getId()))
                     .thenReturn(Optional.of(event1));
-            when(categoryService.getCategoryById(updateEventUserRequest.getCategory())).thenReturn(updatedCategory);
+            when(categoryRepository.findById(updateEventUserRequest.getCategory())).thenReturn(Optional.of(updatedCategory));
             when(locationMapper.toLocation(any())).thenCallRealMethod();
             when(locationRepository.findByLatAndLon(updatedLocationDto.getLat(), updatedLocationDto.getLon()))
                     .thenReturn(Optional.empty());
@@ -642,9 +633,7 @@ public class EventServiceTest {
 
             assertEquals(eventFullDto1, eventFullDto);
 
-            verify(userService, times(1)).getUserById(any());
             verify(eventRepository, times(1)).findByIdAndInitiatorId(any(), any());
-            verify(categoryService, times(1)).getCategoryById(any());
             verify(locationMapper, times(1)).toLocation(any());
             verify(locationRepository, times(1)).findByLatAndLon(any(), any());
             verify(locationRepository, times(1)).save(any());
@@ -663,10 +652,10 @@ public class EventServiceTest {
             updateEventUserRequest.setStateAction(EventStateAction.CANCEL_REVIEW);
             updatedEvent1.setState(EventState.CANCELED);
 
-            when(userService.getUserById(event1.getInitiator().getId())).thenReturn(event1.getInitiator());
+            when(userRepository.findById(event1.getInitiator().getId())).thenReturn(Optional.of(event1.getInitiator()));
             when(eventRepository.findByIdAndInitiatorId(event1.getId(), event1.getInitiator().getId()))
                     .thenReturn(Optional.of(event1));
-            when(categoryService.getCategoryById(updateEventUserRequest.getCategory())).thenReturn(updatedCategory);
+            when(categoryRepository.findById(updateEventUserRequest.getCategory())).thenReturn(Optional.of(updatedCategory));
             when(locationMapper.toLocation(any())).thenCallRealMethod();
             when(locationRepository.findByLatAndLon(updatedLocationDto.getLat(), updatedLocationDto.getLon()))
                     .thenReturn(Optional.empty());
@@ -681,9 +670,7 @@ public class EventServiceTest {
 
             assertEquals(eventFullDto1, eventFullDto);
 
-            verify(userService, times(1)).getUserById(any());
             verify(eventRepository, times(1)).findByIdAndInitiatorId(any(), any());
-            verify(categoryService, times(1)).getCategoryById(any());
             verify(locationMapper, times(1)).toLocation(any());
             verify(locationRepository, times(1)).findByLatAndLon(any(), any());
             verify(locationRepository, times(1)).save(any());
@@ -710,7 +697,7 @@ public class EventServiceTest {
 
         @Test
         public void shouldThrowExceptionIfEventNotFound() {
-            when(userService.getUserById(event1.getInitiator().getId())).thenReturn(event1.getInitiator());
+            when(userRepository.findById(event1.getInitiator().getId())).thenReturn(Optional.of(event1.getInitiator()));
             when(eventRepository.findByIdAndInitiatorId(event1.getId(), event1.getInitiator().getId()))
                     .thenReturn(Optional.empty());
 
@@ -719,13 +706,13 @@ public class EventServiceTest {
                             updateEventUserRequest));
             assertEquals("События с таким id не существует.", exception.getMessage());
 
-            verify(userService, times(1)).getUserById(any());
+            verify(userRepository, times(1)).findById(any());
             verify(eventRepository, times(1)).findByIdAndInitiatorId(any(), any());
         }
 
         @Test
         public void shouldThrowExceptionIfEventIsPublished() {
-            when(userService.getUserById(event3.getInitiator().getId())).thenReturn(event3.getInitiator());
+            when(userRepository.findById(event3.getInitiator().getId())).thenReturn(Optional.of(event3.getInitiator()));
             when(eventRepository.findByIdAndInitiatorId(event3.getId(), event3.getInitiator().getId()))
                     .thenReturn(Optional.of(event3));
 
@@ -734,7 +721,7 @@ public class EventServiceTest {
                             updateEventUserRequest));
             assertEquals("Изменять можно только неопубликованные или отмененные события.", exception.getMessage());
 
-            verify(userService, times(1)).getUserById(any());
+            verify(userRepository, times(1)).findById(any());
             verify(eventRepository, times(1)).findByIdAndInitiatorId(any(), any());
         }
     }
