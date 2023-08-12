@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main_service.category.model.Category;
-import ru.practicum.main_service.category.service.CategoryService;
+import ru.practicum.main_service.category.repository.CategoryRepository;
 import ru.practicum.main_service.event.dto.EventFullDto;
 import ru.practicum.main_service.event.dto.EventShortDto;
 import ru.practicum.main_service.event.dto.LocationDto;
@@ -25,7 +25,7 @@ import ru.practicum.main_service.exception.BadRequestException;
 import ru.practicum.main_service.exception.ForbiddenException;
 import ru.practicum.main_service.exception.NotFoundException;
 import ru.practicum.main_service.user.model.User;
-import ru.practicum.main_service.user.service.UserService;
+import ru.practicum.main_service.user.repository.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -41,8 +41,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 @Slf4j
 public class EventServiceImpl implements EventService {
-    private final UserService userService;
-    private final CategoryService categoryService;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
     private final StatsService statsService;
     private final LocationRepository locationRepository;
     private final EventRepository eventRepository;
@@ -81,7 +81,9 @@ public class EventServiceImpl implements EventService {
         }
 
         if (updateEventAdminRequest.getCategory() != null) {
-            event.setCategory(categoryService.getCategoryById(updateEventAdminRequest.getCategory()));
+            event.setCategory(categoryRepository
+                    .findById(updateEventAdminRequest.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Категории с таким id не существует.")));
         }
 
         if (updateEventAdminRequest.getEventDate() != null) {
@@ -135,7 +137,8 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getAllEventsByPrivate(Long userId, Pageable pageable) {
         log.info("Вывод всех событий пользователя с id {} и пагинацией {}", userId, pageable);
 
-        userService.getUserById(userId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
 
         List<Event> events = eventRepository.findAllByInitiatorId(userId, pageable);
 
@@ -149,8 +152,12 @@ public class EventServiceImpl implements EventService {
 
         checkNewEventDate(newEventDto.getEventDate(), LocalDateTime.now().plusHours(2));
 
-        User eventUser = userService.getUserById(userId);
-        Category eventCategory = categoryService.getCategoryById(newEventDto.getCategory());
+        User eventUser = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
+
+        Category eventCategory = categoryRepository
+                .findById(newEventDto.getCategory())
+                .orElseThrow(() -> new NotFoundException("Категории с таким id не существует."));
         Location eventLocation = getOrSaveLocation(newEventDto.getLocation());
 
         Event newEvent = eventMapper.toEvent(newEventDto, eventUser, eventCategory, eventLocation, LocalDateTime.now(),
@@ -163,7 +170,8 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getEventByPrivate(Long userId, Long eventId) {
         log.info("Вывод события с id {}, созданного пользователем с id {}", eventId, userId);
 
-        userService.getUserById(userId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
 
         Event event = getEventByIdAndInitiatorId(eventId, userId);
 
@@ -178,7 +186,8 @@ public class EventServiceImpl implements EventService {
 
         checkNewEventDate(updateEventUserRequest.getEventDate(), LocalDateTime.now().plusHours(2));
 
-        userService.getUserById(userId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
 
         Event event = getEventByIdAndInitiatorId(eventId, userId);
 
@@ -191,7 +200,9 @@ public class EventServiceImpl implements EventService {
         }
 
         if (updateEventUserRequest.getCategory() != null) {
-            event.setCategory(categoryService.getCategoryById(updateEventUserRequest.getCategory()));
+            event.setCategory(categoryRepository
+                    .findById(updateEventUserRequest.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Категории с таким id не существует.")));
         }
 
         if (updateEventUserRequest.getDescription() != null) {

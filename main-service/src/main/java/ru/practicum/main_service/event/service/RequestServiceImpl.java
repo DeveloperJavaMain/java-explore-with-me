@@ -13,11 +13,12 @@ import ru.practicum.main_service.event.enums.RequestStatusAction;
 import ru.practicum.main_service.event.mapper.RequestMapper;
 import ru.practicum.main_service.event.model.Event;
 import ru.practicum.main_service.event.model.Request;
+import ru.practicum.main_service.event.repository.EventRepository;
 import ru.practicum.main_service.event.repository.RequestRepository;
 import ru.practicum.main_service.exception.ForbiddenException;
 import ru.practicum.main_service.exception.NotFoundException;
 import ru.practicum.main_service.user.model.User;
-import ru.practicum.main_service.user.service.UserService;
+import ru.practicum.main_service.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,8 +32,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 @Slf4j
 public class RequestServiceImpl implements RequestService {
-    private final UserService userService;
-    private final EventService eventService;
+    private final UserRepository userRepository;
+    private final EventRepository eventRepository;
     private final StatsService statsService;
     private final RequestRepository requestRepository;
     private final RequestMapper requestMapper;
@@ -41,7 +42,8 @@ public class RequestServiceImpl implements RequestService {
     public List<ParticipationRequestDto> getEventRequestsByRequester(Long userId) {
         log.info("Вывод списка запросов на участие в чужих событиях пользователем с id {}", userId);
 
-        userService.getUserById(userId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
 
         return toParticipationRequestsDto(requestRepository.findAllByRequesterId(userId));
     }
@@ -51,8 +53,11 @@ public class RequestServiceImpl implements RequestService {
     public ParticipationRequestDto createEventRequest(Long userId, Long eventId) {
         log.info("Создание запроса на участие в событии с id {} пользователем с id {}", eventId, userId);
 
-        User user = userService.getUserById(userId);
-        Event event = eventService.getEventById(eventId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("События с таким id не существует."));
 
         if (Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ForbiddenException("Нельзя создавать запрос на собственное событие.");
@@ -93,7 +98,8 @@ public class RequestServiceImpl implements RequestService {
     public ParticipationRequestDto cancelEventRequest(Long userId, Long requestId) {
         log.info("Отмена запроса с id {} на участие в событии пользователем с id {}", requestId, userId);
 
-        userService.getUserById(userId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
 
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Заявки на участие с таким id не существует."));
@@ -109,8 +115,11 @@ public class RequestServiceImpl implements RequestService {
     public List<ParticipationRequestDto> getEventRequestsByEventOwner(Long userId, Long eventId) {
         log.info("Вывод списка запросов на участие в событии с id {} владельцем с id {}", eventId, userId);
 
-        userService.getUserById(userId);
-        Event event = eventService.getEventById(eventId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("События с таким id не существует."));
 
         checkUserIsOwner(event.getInitiator().getId(), userId);
 
@@ -124,8 +133,11 @@ public class RequestServiceImpl implements RequestService {
         log.info("Обновление запросов на участие в событии с id {} владельцем с id {} и параметрами {}",
                 eventId, userId, eventRequestStatusUpdateRequest);
 
-        userService.getUserById(userId);
-        Event event = eventService.getEventById(eventId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователя с таким id не существует."));
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("События с таким id не существует."));
 
         checkUserIsOwner(event.getInitiator().getId(), userId);
 
